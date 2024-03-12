@@ -1,0 +1,36 @@
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  labels:
+    app: django
+    env: dev
+    tier: backend
+  name: cronjob-clearsessions
+spec:
+  schedule: "0 1 * * *"
+  startingDeadlineSeconds: 15
+  jobTemplate:
+    spec:
+      ttlSecondsAfterFinished: 50
+      template:
+        metadata:
+          labels:
+            app: django
+            env: dev
+            tier: backend
+        spec:
+          containers:
+          - name: cronjob-clearsessions
+            image: django_app:latest
+            imagePullPolicy: IfNotPresent
+            env:
+            - name: DATABASE_URL
+              valueFrom:
+                secretKeyRef:
+                  name: secret-stringdata
+                  key: database_url
+            command:
+              - python
+              - manage.py
+              - clearsessions
+          restartPolicy: OnFailure
